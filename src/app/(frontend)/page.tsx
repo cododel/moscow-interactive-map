@@ -59,9 +59,10 @@ export default async function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {locations.map((loc: any) => (
-            <div
+            <a
               key={loc.id}
-              className="group relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200/60 hover:border-primary/30 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2"
+              href={`/locations/${loc.slug}`}
+              className="group block relative overflow-hidden rounded-[2.5rem] bg-white border border-slate-200/60 hover:border-primary/30 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 no-underline text-inherit"
             >
               {loc.previewImage?.url ? (
                 <div className="aspect-[4/3] w-full overflow-hidden relative">
@@ -73,7 +74,7 @@ export default async function Home() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
               ) : (
-                <div className="aspect-[4/3] w-full bg-slate-100 flex items-center justify-center text-slate-300">
+                <div className="aspect-[4/3] w-full bg-slate-100 flex items-center justify-center text-slate-300 font-medium">
                   Нет изображения
                 </div>
               )}
@@ -84,14 +85,12 @@ export default async function Home() {
                 <p className="text-slate-500 mb-6 line-clamp-2 text-base leading-relaxed">
                   {loc.shortDescription}
                 </p>
-                <a
-                  href={`/locations/${loc.slug}`}
-                  className="inline-flex items-center text-primary font-bold hover:gap-3 transition-all duration-300"
-                >
-                  Подробнее <span className="ml-1">→</span>
-                </a>
+                <div className="inline-flex items-center text-primary font-bold hover:gap-3 transition-all duration-300">
+                  Подробнее{' '}
+                  <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+                </div>
               </div>
-            </div>
+            </a>
           ))}
         </div>
       </section>
