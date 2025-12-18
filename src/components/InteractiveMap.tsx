@@ -22,19 +22,26 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
   const mapInstanceRef = useRef<any>(null)
 
   useEffect(() => {
+    let isMounted = true
+
     const initMap = () => {
-      if (!window.ymaps || !mapRef.current || mapInstanceRef.current) return
+      // Don't initialize if already initialized, if component unmounted, or if container and API are missing
+      if (!window.ymaps || !mapRef.current || mapInstanceRef.current || !isMounted) return
 
       window.ymaps.ready(() => {
+        if (!isMounted || mapInstanceRef.current || !mapRef.current) return
+
+        // Clear the container to prevent duplicate maps (crucial for React navigation)
+        mapRef.current.innerHTML = ''
+
         const map = new window.ymaps.Map(mapRef.current, {
           center: [55.751244, 37.618423], // Moscow center
           zoom: 10,
           controls: [],
         })
 
-        // Create a custom layout for the marker with an image
-        const MarkerLayout = window.ymaps.templateLayoutFactory.createClass(
-          `
+        // Create custom marker layout
+        const MarkerLayout = window.ymaps.templateLayoutFactory.createClass(`
           <div style="position: relative;">
             <div style="
               position: absolute;
@@ -68,12 +75,10 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
               </div>
             </div>
           </div>
-          `,
-        )
+        `)
 
-        // Create a custom layout for the balloon content
-        const BalloonContentLayout = window.ymaps.templateLayoutFactory.createClass(
-          `
+        // Create custom balloon layout
+        const BalloonContentLayout = window.ymaps.templateLayoutFactory.createClass(`
           <div class="modern-balloon">
             <div class="balloon-image-container">
               <img src="$[properties.image]" alt="$[properties.title]" class="balloon-image" />
@@ -87,8 +92,7 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
               </a>
             </div>
           </div>
-          `,
-        )
+        `)
 
         locations.forEach((loc) => {
           const placemark = new window.ymaps.Placemark(
@@ -102,18 +106,15 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
             },
             {
               iconLayout: MarkerLayout,
-              // Offset is now handled inside the layout via CSS
               iconOffset: [0, 0],
-              // Explicitly define the hit area relative to the anchor point (0,0)
               iconShape: {
                 type: 'Circle',
-                coordinates: [0, -25], // Center of the marker body
+                coordinates: [0, -25],
                 radius: 18,
               },
               balloonContentLayout: BalloonContentLayout,
-              // Hide the default balloon header/shadow for more modern look
               balloonShadow: false,
-              balloonPanelMaxMapArea: 0, // Keep balloon as a popup
+              balloonPanelMaxMapArea: 0,
             },
           )
           map.geoObjects.add(placemark)
@@ -123,27 +124,31 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
       })
     }
 
+    const scriptId = 'yandex-maps-script'
+    const existingScript = document.getElementById(scriptId) as HTMLScriptElement
+
     if (window.ymaps) {
       initMap()
+    } else if (existingScript) {
+      existingScript.addEventListener('load', initMap)
     } else {
-      const scriptId = 'yandex-maps-script'
-      let script = document.getElementById(scriptId) as HTMLScriptElement
-
-      if (!script) {
-        script = document.createElement('script')
-        script.id = scriptId
-        script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
-        script.async = true
-        document.body.appendChild(script)
-      }
-
+      const script = document.createElement('script')
+      script.id = scriptId
+      script.src = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU'
+      script.async = true
       script.addEventListener('load', initMap)
+      document.body.appendChild(script)
     }
 
     return () => {
+      isMounted = false
       if (mapInstanceRef.current) {
         mapInstanceRef.current.destroy()
         mapInstanceRef.current = null
+      }
+      const script = document.getElementById(scriptId)
+      if (script) {
+        script.removeEventListener('load', initMap)
       }
     }
   }, [locations])
