@@ -39,6 +39,7 @@ yarn-error.log*
 next-env.d.ts
 
 .env
+!.db
 
 /media
 
@@ -48,3 +49,5 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+repomix-output.*
