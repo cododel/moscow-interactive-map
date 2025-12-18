@@ -71,18 +71,33 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
           `,
         )
 
+        // Create a custom layout for the balloon content
+        const BalloonContentLayout = window.ymaps.templateLayoutFactory.createClass(
+          `
+          <div class="modern-balloon">
+            <div class="balloon-image-container">
+              <img src="$[properties.image]" alt="$[properties.title]" class="balloon-image" />
+            </div>
+            <div class="balloon-content">
+              <h3 class="balloon-title">$[properties.title]</h3>
+              <p class="balloon-description">$[properties.description]</p>
+              <a href="$[properties.link]" class="balloon-button">
+                Подробнее
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </a>
+            </div>
+          </div>
+          `,
+        )
+
         locations.forEach((loc) => {
           const placemark = new window.ymaps.Placemark(
             [loc.location.latitude, loc.location.longitude],
             {
-              balloonContentHeader: `<strong>${loc.title}</strong>`,
-              balloonContentBody: `
-                  <div style="max-width: 200px;">
-                    <img src="${loc.previewImage?.url}" style="width: 100%; height: auto; border-radius: 4px; margin-bottom: 8px;" />
-                    <p>${loc.shortDescription}</p>
-                    <a href="/locations/${loc.slug}" style="color: #0070f3; cursor: pointer;">Подробнее...</a>
-                  </div>
-                `,
+              title: loc.title,
+              description: loc.shortDescription,
+              image: loc.previewImage?.url || '',
+              link: `/locations/${loc.slug}`,
               iconImage: loc.previewImage?.url || '',
             },
             {
@@ -95,6 +110,10 @@ export default function InteractiveMap({ locations }: { locations: Location[] })
                 coordinates: [0, -25], // Center of the marker body
                 radius: 18,
               },
+              balloonContentLayout: BalloonContentLayout,
+              // Hide the default balloon header/shadow for more modern look
+              balloonShadow: false,
+              balloonPanelMaxMapArea: 0, // Keep balloon as a popup
             },
           )
           map.geoObjects.add(placemark)
